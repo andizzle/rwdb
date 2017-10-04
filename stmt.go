@@ -13,8 +13,8 @@ type Stmt interface {
 	ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
 	Query(args ...interface{}) (*sql.Rows, error)
 	QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error)
-	QueryRow(args ...interface{}) *sql.Row
-	QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row
+	QueryRow(args ...interface{}) Row
+	QueryRowContext(ctx context.Context, args ...interface{}) Row
 }
 
 // stmt holds at most 2 sql.Stmt

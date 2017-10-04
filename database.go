@@ -48,9 +48,7 @@ func walk(cpool *CPool, fn func(conn *sql.DB) error) error {
 // Open creates the DB instance
 // The opening of each underline connection is non-blocking
 func Open(driver string, dataSourceNames ...string) (*DB, error) {
-	var db = &DB{
-		cpool: &CPool{},
-	}
+	var db = &DB{cpool: &CPool{}}
 
 	if len(dataSourceNames) == 0 {
 		return nil, errors.New("no data source name available")
@@ -66,7 +64,7 @@ func Open(driver string, dataSourceNames ...string) (*DB, error) {
 
 	for _, conn := range dataSourceNames[1:] {
 		go func(conn string) {
-			d, _ := sql.Open(driver, dataSourceNames[0])
+			d, _ := sql.Open(driver, conn)
 
 			if db.maxIdleModified {
 				// we don't want set this to 0 blindly
