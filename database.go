@@ -131,15 +131,15 @@ func (db *DB) PingContext(ctx context.Context) error {
 }
 
 // Prepare prepare stateuments with a background context
-func (db *DB) Prepare(query string) (*Stmt, error) {
+func (db *DB) Prepare(query string) (Stmt, error) {
 	return db.PrepareContext(context.Background(), query)
 }
 
 // PrepareContext two statements, one in Writer one in Reader
 // The statement will be executed in the writer
 // and queries in reader
-func (db *DB) PrepareContext(ctx context.Context, query string) (*Stmt, error) {
-	stmt := Stmt{}
+func (db *DB) PrepareContext(ctx context.Context, query string) (Stmt, error) {
+	stmt := stmt{}
 
 	write, _ := db.cpool.Writer().Prepare(query)
 	stmt.stmts = append([]*sql.Stmt{write}, stmt.stmts...)

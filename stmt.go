@@ -5,11 +5,24 @@ import (
 	"database/sql"
 )
 
-type Stmt struct {
+// Stmt allows DB
+type Stmt interface {
+	Close() error
+	Exec(args ...interface{}) (sql.Result, error)
+	ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error)
+	Query(args ...interface{}) (*sql.Rows, error)
+	QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error)
+	QueryRow(args ...interface{}) *sql.Row
+	QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row
+}
+
+// stmt holds at most 2 sql.Stmt
+type stmt struct {
 	stmts []*sql.Stmt
 }
 
-func (s *Stmt) Close() error {
+// Close will close the statments connections
+func (s *stmt) Close() error {
 	for _, s := range s.stmts {
 		s.Close()
 	}
@@ -17,19 +30,25 @@ func (s *Stmt) Close() error {
 	return nil
 }
 
-func (s *Stmt) Exec(args ...interface{}) (sql.Result, error) {
+// Exec execute statement with background context
+func (s *stmt) Exec(args ...interface{}) (sql.Result, error) {
 	return s.ExecContext(context.Background(), args...)
 }
 
-func (s *Stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error) {
+// Exec execute statement with context
+// The statement is executed on the writer database
+func (s *stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error) {
 	return s.stmts[0].Exec(args...)
 }
 
-func (s *Stmt) Query(args ...interface{}) (*sql.Rows, error) {
+// Query execute statement with background context
+func (s *stmt) Query(args ...interface{}) (*sql.Rows, error) {
 	return s.QueryContext(context.Background(), args...)
 }
 
-func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error) {
+// Query execute statement with context
+// The statement is executed on reader database
+func (s *stmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error) {
 	stmt := s.stmts[0]
 	if len(s.stmts) > 1 {
 		stmt = s.stmts[1]
@@ -38,11 +57,13 @@ func (s *Stmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows
 	return stmt.QueryContext(ctx, args...)
 }
 
-func (s *Stmt) QueryRow(args ...interface{}) *sql.Row {
+// QueryRow query the statement with background context
+func (s *stmt) QueryRow(args ...interface{}) *sql.Row {
 	return s.QueryRowContext(context.Background(), args...)
 }
 
-func (s *Stmt) QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row {
+// QueryRowContext is executed on reader database
+func (s *stmt) QueryRowContext(ctx context.Context, args ...interface{}) *sql.Row {
 	stmt := s.stmts[0]
 	if len(s.stmts) > 1 {
 		stmt = s.stmts[1]
