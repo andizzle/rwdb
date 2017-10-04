@@ -181,6 +181,7 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (Stmt, error) {
 
 			if err != nil {
 				// we have writer statement prepared
+				// this error can be ignored
 				return
 			}
 
@@ -226,7 +227,6 @@ func (db *DB) QueryRow(query string, args ...interface{}) Row {
 func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) Row {
 	reader, err := db.next()
 	if err != nil {
-		// TODO: this should return a row with error
 		return &row{err: err}
 	}
 
