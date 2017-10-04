@@ -2,6 +2,7 @@ package rwdb
 
 import (
 	"database/sql"
+	"errors"
 	"sync"
 )
 
@@ -14,15 +15,24 @@ type CPool struct {
 }
 
 func (c *CPool) nextInPool() int {
-	c.next++
-	pos := c.next % len(c.pool)
+	c.next = (c.next + 1) % len(c.pool)
 
-	return pos
+	return c.next
 }
 
 // AddReader append a db connection to the pool
 func (c *CPool) AddReader(db *sql.DB) {
 	cplock.RLock()
+
+	if len(c.pool) > 1 {
+		for i, po := range c.pool[1:] {
+			if po == nil {
+				c.pool[i+1] = db
+				return
+			}
+		}
+	}
+
 	c.pool = append(c.pool, db)
 	cplock.RUnlock()
 }
@@ -34,24 +44,35 @@ func (c *CPool) AddWriter(db *sql.DB) {
 }
 
 // Reader gets the reader connection next in line
-func (c *CPool) Reader() *sql.DB {
+func (c *CPool) Reader() (*sql.DB, error) {
 	pos := c.nextInPool()
 
-	// TODO: create timeout context
 	cplock.RLock()
 
 	conn := c.pool[pos]
 
+	var count int
+
 	for conn == nil {
-		conn = c.pool[c.nextInPool()]
+		if count = c.nextInPool(); count == pos {
+			return nil, errors.New("no db reader available")
+		}
+
+		conn = c.pool[count]
 	}
 
 	cplock.RUnlock()
 
-	return conn
+	return conn, nil
 }
 
 // Writer gets the writer connection
-func (c *CPool) Writer() *sql.DB {
-	return c.pool[0]
+func (c *CPool) Writer() (*sql.DB, error) {
+	db := c.pool[0]
+
+	if db == nil {
+		return db, errors.New("no db writer available")
+	}
+
+	return db, nil
 }
