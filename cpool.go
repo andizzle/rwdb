@@ -55,7 +55,7 @@ func (c *CPool) Reader() (*sql.DB, error) {
 
 	for conn == nil {
 		if count = c.nextInPool(); count == pos {
-			return nil, errors.New("no db reader available")
+			return nil, errors.New("no reader db available")
 		}
 
 		conn = c.pool[count]
@@ -71,7 +71,7 @@ func (c *CPool) Writer() (*sql.DB, error) {
 	db := c.pool[0]
 
 	if db == nil {
-		return db, errors.New("no db writer available")
+		return db, errors.New("no writer db available")
 	}
 
 	return db, nil

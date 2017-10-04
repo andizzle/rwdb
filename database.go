@@ -13,7 +13,7 @@ import (
 // new db pool, use Clone()
 type DB struct {
 	cpool           *CPool
-	sticky          bool
+	sticky          bool // sticky redirects subsequent queries after a write to Writer DB, this is default to true
 	modified        bool
 	maxIdle         int
 	maxOpen         int
@@ -50,6 +50,8 @@ func walk(cpool *CPool, fn func(conn *sql.DB) error) error {
 func Open(driver string, dataSourceNames ...string) (*DB, error) {
 	var db = &DB{cpool: &CPool{}}
 
+	db.SetSticky(true)
+
 	if len(dataSourceNames) == 0 {
 		return nil, errors.New("no data source name available")
 	}
@@ -57,6 +59,8 @@ func Open(driver string, dataSourceNames ...string) (*DB, error) {
 	d, err := sql.Open(driver, dataSourceNames[0])
 
 	if err != nil {
+		// writer failed to open
+		// this is fatal
 		return nil, err
 	}
 
@@ -88,6 +92,11 @@ func (db *DB) next() (*sql.DB, error) {
 	}
 
 	return db.cpool.Reader()
+}
+
+// SetSticky allows sticky be turned on and off
+func (db *DB) SetSticky(stick bool) {
+	db.sticky = stick
 }
 
 // Clone creates a new DB with the same
