@@ -61,7 +61,7 @@ func (s *stmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows
 	stmt := s.stmts[0]
 
 	if len(s.stmts) > 1 {
-		stmt = s.stmts[1]
+		return s.stmts[1].QueryContext(ctx, args...)
 	}
 
 	return stmt.QueryContext(ctx, args...)
@@ -80,7 +80,7 @@ func (s *stmt) QueryRowContext(ctx context.Context, args ...interface{}) Row {
 
 	stmt := s.stmts[0]
 	if len(s.stmts) > 1 {
-		stmt = s.stmts[1]
+		return s.stmts[1].QueryRowContext(ctx, args...)
 	}
 
 	return stmt.QueryRowContext(ctx, args...)
