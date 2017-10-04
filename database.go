@@ -217,17 +217,17 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{
 }
 
 // QueryRow runs the QueryRowContext with a background context
-func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
+func (db *DB) QueryRow(query string, args ...interface{}) Row {
 	return db.QueryRowContext(context.Background(), query, args)
 }
 
 // QueryRowContext perform the underline QueryRowContext of sql.DB
 // on the next connection
-func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) Row {
 	reader, err := db.next()
 	if err != nil {
 		// TODO: this should return a row with error
-		return &sql.Row{}
+		return &row{err: err}
 	}
 
 	return reader.QueryRowContext(ctx, query, args...)
