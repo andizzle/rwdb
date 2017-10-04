@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"errors"
 	"time"
 )
 
@@ -25,6 +26,10 @@ func walk(cpool *CPool, fn func(conn *sql.DB) error) error {
 	errors := make(chan error, n)
 
 	for _, conn := range cpool.pool {
+		if conn == nil {
+			continue
+		}
+
 		go func(conn *sql.DB) {
 			errors <- fn(conn)
 		}(conn)
@@ -42,19 +47,26 @@ func walk(cpool *CPool, fn func(conn *sql.DB) error) error {
 
 // Open creates the DB instance
 // The opening of each underline connection is non-blocking
-func Open(driver string, conns ...string) (*DB, error) {
+func Open(driver string, dataSourceNames ...string) (*DB, error) {
 	var db = &DB{
 		cpool: &CPool{},
 	}
 
-	go func() {
-		d, _ := sql.Open(driver, conns[0])
-		db.cpool.AddWriter(d)
-	}()
+	if len(dataSourceNames) == 0 {
+		return nil, errors.New("no data source name available")
+	}
 
-	for _, conn := range conns[1:] {
+	d, err := sql.Open(driver, dataSourceNames[0])
+
+	if err != nil {
+		return nil, err
+	}
+
+	db.cpool.AddWriter(d)
+
+	for _, conn := range dataSourceNames[1:] {
 		go func(conn string) {
-			d, _ := sql.Open(driver, conns[0])
+			d, _ := sql.Open(driver, dataSourceNames[0])
 
 			if db.maxIdleModified {
 				// we don't want set this to 0 blindly
@@ -72,7 +84,7 @@ func Open(driver string, conns ...string) (*DB, error) {
 	return db, nil
 }
 
-func (db *DB) next() *sql.DB {
+func (db *DB) next() (*sql.DB, error) {
 	if db.sticky && db.modified {
 		return db.cpool.Writer()
 	}
@@ -92,13 +104,20 @@ func (db *DB) Clone() *DB {
 // Driver returns the driver of the DB
 // The Writer's driver represents all readers
 func (db *DB) Driver() driver.Driver {
-	return db.cpool.Writer().Driver()
+	writer, _ := db.cpool.Writer()
+
+	return writer.Driver()
 }
 
 // Begin starts a transaction on Writer
 // It's likely the subsequent queries will perform a write
 func (db *DB) Begin() (*sql.Tx, error) {
-	return db.cpool.Writer().Begin()
+	writer, err := db.cpool.Writer()
+	if err != nil {
+		return nil, err
+	}
+
+	return writer.Begin()
 }
 
 // Exec writes to Writer and mark db as modified
@@ -109,7 +128,13 @@ func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
 // ExecContext execute a query with context
 // and mark the db as modified
 func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	result, err := db.cpool.Writer().ExecContext(ctx, query, args...)
+	writer, err := db.cpool.Writer()
+
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := writer.ExecContext(ctx, query, args...)
 
 	if rowAffected, _ := result.RowsAffected(); rowAffected > 0 {
 		db.modified = true
@@ -141,12 +166,25 @@ func (db *DB) Prepare(query string) (Stmt, error) {
 func (db *DB) PrepareContext(ctx context.Context, query string) (Stmt, error) {
 	stmt := stmt{}
 
-	write, _ := db.cpool.Writer().Prepare(query)
+	writer, err := db.cpool.Writer()
+
+	if err != nil {
+		return nil, err
+	}
+
+	write, err := writer.Prepare(query)
 	stmt.stmts = append([]*sql.Stmt{write}, stmt.stmts...)
 
 	if len(db.cpool.pool) > 1 {
 		go func() {
-			read, _ := db.cpool.Reader().PrepareContext(ctx, query)
+			reader, err := db.cpool.Reader()
+
+			if err != nil {
+				// we have writer statement prepared
+				return
+			}
+
+			read, _ := reader.PrepareContext(ctx, query)
 			stmt.stmts = append(stmt.stmts, read)
 		}()
 	}
@@ -170,7 +208,12 @@ func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
 // The args are for any placeholder parameters in the query.
 // The query will be performed in the next connection
 func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	return db.next().QueryContext(ctx, query, args...)
+	reader, err := db.next()
+	if err != nil {
+		return nil, err
+	}
+
+	return reader.QueryContext(ctx, query, args...)
 }
 
 // QueryRow runs the QueryRowContext with a background context
@@ -181,7 +224,13 @@ func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
 // QueryRowContext perform the underline QueryRowContext of sql.DB
 // on the next connection
 func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	return db.next().QueryRowContext(ctx, query, args...)
+	reader, err := db.next()
+	if err != nil {
+		// TODO: this should return a row with error
+		return &sql.Row{}
+	}
+
+	return reader.QueryRowContext(ctx, query, args...)
 }
 
 // SetMaxIdleConns sets the max idel conns
