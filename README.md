@@ -7,7 +7,7 @@ Database wrapper that manage read write connections
 go get github.com/andizzle/rwdb
 ```
 
-### Create connections
+## Create connections
 
 ```go
 package main
@@ -26,7 +26,7 @@ var conns = []string{
 db, err := rwdb.Open("driver", conns...)
 ```
 
-### Rotation read and Sticky read
+## Rotation read and Sticky read
 
 Query a database rotate the use of database connections
 
@@ -81,4 +81,6 @@ func RecordUserLogin() {
 }
 ```
 
-### [License](https://github.com/andizzle/rwdb/blob/master/LICENSE)
+## License
+
+[License](https://github.com/andizzle/rwdb/blob/master/LICENSE)
