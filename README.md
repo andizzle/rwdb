@@ -80,3 +80,5 @@ func RecordUserLogin() {
         d.Query(...)         // Connection is set to the writer
 }
 ```
+
+### [License](https://github.com/andizzle/rwdb/blob/master/LICENSE)
