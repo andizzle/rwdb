@@ -6,9 +6,14 @@ import (
 )
 
 func TestNextInPool(t *testing.T) {
-	var c = CPool{pool: make([]*sql.DB, 5)}
+	var c = CPool{pool: []*sql.DB{}}
 
-	if got := c.nextInPool(); got != 1 {
+	if got := c.nextInPool(); got != -1 {
+		t.Errorf("expect next position to be -1, got %d", got)
+	}
+
+	c.AddReader(&sql.DB{})
+	if got := c.nextInPool(); got != 0 {
 		t.Errorf("expect next position to be 1, got %d", got)
 	}
 
@@ -63,11 +68,38 @@ func TestAddWriter(t *testing.T) {
 }
 
 func TestGetReader(t *testing.T) {
-	var c = CPool{pool: make([]*sql.DB, 5)}
+	var c = CPool{pool: []*sql.DB{}}
 
-	db, err := c.Reader()
+	if db, err := c.Reader(); err == nil {
+		t.Errorf("get reader from empty cpool expect to return err, got %s instead", db)
+	}
 
-	if err == nil {
-		t.Errorf("expecting error, got %v instead", db)
+	c = CPool{pool: make([]*sql.DB, 2)}
+
+	if db, err := c.Reader(); err == nil {
+		t.Errorf("get reader from nil cpool expect to return err, got %s instead", db)
+	}
+
+	c.AddReader(&sql.DB{})
+	if db, _ := c.Reader(); db == nil {
+		t.Errorf("expect db, got %s instead", db)
+	}
+}
+
+func TestGetWriter(t *testing.T) {
+	var c = CPool{pool: []*sql.DB{}}
+
+	if db, err := c.Writer(); err == nil {
+		t.Errorf("get writer from empty cpool expect to return err, got %s instead", db)
+	}
+
+	c = CPool{pool: []*sql.DB{}}
+	if db, err := c.Writer(); err == nil {
+		t.Errorf("get writer from nil cpool expect to return err, got %s instead", db)
+	}
+
+	c.AddWriter(&sql.DB{})
+	if db, err := c.Writer(); err != nil {
+		t.Errorf("get writer from cpool expect to return db, got %s instead", db)
 	}
 }

@@ -15,6 +15,10 @@ type CPool struct {
 }
 
 func (c *CPool) nextInPool() int {
+	if len(c.pool) == 0 {
+		return -1
+	}
+
 	c.next = (c.next + 1) % len(c.pool)
 
 	return c.next
@@ -47,6 +51,10 @@ func (c *CPool) AddWriter(db *sql.DB) {
 func (c *CPool) Reader() (*sql.DB, error) {
 	pos := c.nextInPool()
 
+	if pos < 0 {
+		return nil, errors.New("no reader db available")
+	}
+
 	cplock.RLock()
 
 	conn := c.pool[pos]
@@ -68,10 +76,14 @@ func (c *CPool) Reader() (*sql.DB, error) {
 
 // Writer gets the writer connection
 func (c *CPool) Writer() (*sql.DB, error) {
+	if len(c.pool) == 0 {
+		return nil, errors.New("no writer db available")
+	}
+
 	db := c.pool[0]
 
 	if db == nil {
-		return db, errors.New("no writer db available")
+		return nil, errors.New("no writer db available")
 	}
 
 	return db, nil
