@@ -4,14 +4,14 @@ import (
 	"database/sql"
 	"errors"
 	"sync"
+	"sync/atomic"
 )
-
-var cplock sync.RWMutex
 
 // CPool holds the  master and slave connection pools
 type CPool struct {
 	pool []*sql.DB
-	next int
+	next uint64
+	lock sync.RWMutex
 }
 
 func (c *CPool) nextInPool() int {
@@ -19,14 +19,14 @@ func (c *CPool) nextInPool() int {
 		return -1
 	}
 
-	c.next = (c.next + 1) % len(c.pool)
-
-	return c.next
+	c.next = atomic.AddUint64(&c.next, 1) % uint64(len(c.pool))
+	return int(c.next)
 }
 
 // AddReader append a db connection to the pool
 func (c *CPool) AddReader(db *sql.DB) {
-	cplock.RLock()
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 
 	if len(c.pool) > 1 {
 		for i, po := range c.pool[1:] {
@@ -38,13 +38,14 @@ func (c *CPool) AddReader(db *sql.DB) {
 	}
 
 	c.pool = append(c.pool, db)
-	cplock.RUnlock()
 }
 
 // AddWriter prepend a db connection to the pool
 // Previous writer automatically become a reader
 func (c *CPool) AddWriter(db *sql.DB) {
+	c.lock.Lock()
 	c.pool = append([]*sql.DB{db}, c.pool...)
+	c.lock.Unlock()
 }
 
 // Reader gets the reader connection next in line
@@ -55,7 +56,8 @@ func (c *CPool) Reader() (*sql.DB, error) {
 		return nil, errors.New("no reader db available")
 	}
 
-	cplock.RLock()
+	c.lock.RLock()
+	defer c.lock.RUnlock()
 
 	conn := c.pool[pos]
 
@@ -69,13 +71,14 @@ func (c *CPool) Reader() (*sql.DB, error) {
 		conn = c.pool[count]
 	}
 
-	cplock.RUnlock()
-
 	return conn, nil
 }
 
 // Writer gets the writer connection
 func (c *CPool) Writer() (*sql.DB, error) {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
 	if len(c.pool) == 0 {
 		return nil, errors.New("no writer db available")
 	}
