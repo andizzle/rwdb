@@ -1,6 +1,7 @@
 # rwdb
 
 [![Build Status](https://travis-ci.org/andizzle/rwdb.svg?branch=master)](https://travis-ci.org/andizzle/rwdb)
+[![GoDoc](https://godoc.org/github.com/andizzle/rwdb?status.svg)](https://godoc.org/github.com/andizzle/rwdb)
 
 Database wrapper that manage read write connections
 
