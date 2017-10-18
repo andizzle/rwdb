@@ -52,18 +52,18 @@ func TestAddWriter(t *testing.T) {
 	c.AddWriter(db1)
 
 	if c.pool[0] != db1 {
-		t.Errorf("expect writer to be %v, got %s instead", db1, c.pool[0])
+		t.Errorf("expect writer to be %v, got %v instead", db1, c.pool[0])
 	}
 
 	db2 := &sql.DB{}
 	c.AddWriter(db2)
 
 	if c.pool[0] != db2 {
-		t.Errorf("expect writer to be %v, got %s instead", db2, c.pool[0])
+		t.Errorf("expect writer to be %v, got %v instead", db2, c.pool[0])
 	}
 
 	if c.pool[1] != db1 {
-		t.Errorf("expect reader to be %v, got %s instead", db1, c.pool[1])
+		t.Errorf("expect reader to be %v, got %v instead", db1, c.pool[1])
 	}
 }
 
@@ -71,18 +71,18 @@ func TestGetReader(t *testing.T) {
 	var c = CPool{pool: []*sql.DB{}}
 
 	if db, err := c.Reader(); err == nil {
-		t.Errorf("get reader from empty cpool expect to return err, got %s instead", db)
+		t.Errorf("get reader from empty cpool expect to return err, got %v instead", db)
 	}
 
 	c = CPool{pool: make([]*sql.DB, 2)}
 
 	if db, err := c.Reader(); err == nil {
-		t.Errorf("get reader from nil cpool expect to return err, got %s instead", db)
+		t.Errorf("get reader from nil cpool expect to return err, got %v instead", db)
 	}
 
 	c.AddReader(&sql.DB{})
 	if db, _ := c.Reader(); db == nil {
-		t.Errorf("expect db, got %s instead", db)
+		t.Errorf("expect db, got %v instead", db)
 	}
 }
 
@@ -90,16 +90,16 @@ func TestGetWriter(t *testing.T) {
 	var c = CPool{pool: []*sql.DB{}}
 
 	if db, err := c.Writer(); err == nil {
-		t.Errorf("get writer from empty cpool expect to return err, got %s instead", db)
+		t.Errorf("get writer from empty cpool expect to return err, got %v instead", db)
 	}
 
 	c = CPool{pool: []*sql.DB{}}
 	if db, err := c.Writer(); err == nil {
-		t.Errorf("get writer from nil cpool expect to return err, got %s instead", db)
+		t.Errorf("get writer from nil cpool expect to return err, got %v instead", db)
 	}
 
 	c.AddWriter(&sql.DB{})
 	if db, err := c.Writer(); err != nil {
-		t.Errorf("get writer from cpool expect to return db, got %s instead", db)
+		t.Errorf("get writer from cpool expect to return db, got %v instead", db)
 	}
 }

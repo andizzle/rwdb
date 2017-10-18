@@ -88,13 +88,13 @@ func TestNext(t *testing.T) {
 	writer, _ := db.next()
 
 	if writer != db.cpool.pool[0] {
-		t.Errorf("expect first next to return a writer, instead got %s", writer)
+		t.Errorf("expect first next to return a writer, instead got %v", writer)
 	}
 
 	reader, _ := db.next()
 
 	if reader != db.cpool.pool[1] {
-		t.Errorf("expect reader to return, instead got %s", reader)
+		t.Errorf("expect reader to return, instead got %v", reader)
 	}
 
 	db.modified = true
@@ -102,6 +102,6 @@ func TestNext(t *testing.T) {
 	writer, _ = db.next()
 
 	if writer != db.cpool.pool[0] {
-		t.Errorf("expect writer to return, instead got %s", writer)
+		t.Errorf("expect writer to return, instead got %v", writer)
 	}
 }

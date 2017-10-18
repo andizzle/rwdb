@@ -180,6 +180,11 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (Stmt, error) {
 	}
 
 	write, err := writer.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
 	stmt.stmts = append([]*sql.Stmt{write}, stmt.stmts...)
 
 	if len(db.cpool.pool) > 1 {
