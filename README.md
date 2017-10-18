@@ -1,4 +1,7 @@
 # rwdb
+
+[![Build Status](https://travis-ci.org/andizzle/rwdb.svg?branch=master)](https://travis-ci.org/andizzle/rwdb)
+
 Database wrapper that manage read write connections
 
 ## install
