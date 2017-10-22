@@ -10,7 +10,7 @@ import (
 
 // DB holds connection pool(s)
 // This should be created once, and for each acquaring of
-// new db pool, use Clone()
+// new db pool, use New()
 type DB struct {
 	cpool           *CPool
 	sticky          bool // sticky redirects subsequent queries after a write to Writer DB, this is default to true
@@ -99,9 +99,9 @@ func (db *DB) SetSticky(stick bool) {
 	db.sticky = stick
 }
 
-// Clone creates a new DB with the same
+// New creates a new DB with the same
 // sticky and Connection pool, but reset modified
-func (db *DB) Clone() *DB {
+func (db *DB) New() *DB {
 	return &DB{
 		cpool:  db.cpool,
 		sticky: db.sticky,

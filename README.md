@@ -75,7 +75,7 @@ Here's what we can do:
 db, err := rwdb.Open("driver", conns...)
 
 func RecordUserLogin() {
-        d := db.Clone()      // This will make sure the following read are not affected by 
+        d := db.New()      // This will make sure the following read are not affected by 
                              // other sessions' write action
 
         d.Query("SELECT * from `users` where id = ?")

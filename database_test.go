@@ -50,10 +50,10 @@ func TestSetSticky(t *testing.T) {
 	}
 }
 
-func TestClone(t *testing.T) {
+func TestNew(t *testing.T) {
 	db, _ := Open("dummy", "foo")
 
-	dbClone := db.Clone()
+	dbClone := db.New()
 
 	if db.cpool != dbClone.cpool {
 		t.Errorf("cloned db should use the same cpool pointer")
