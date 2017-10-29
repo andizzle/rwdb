@@ -15,6 +15,9 @@ type CPool struct {
 }
 
 func (c *CPool) nextInPool() int {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
 	if len(c.pool) == 0 {
 		return -1
 	}
@@ -23,10 +26,17 @@ func (c *CPool) nextInPool() int {
 	return int(c.next)
 }
 
-// AddReader append a db connection to the pool
-func (c *CPool) AddReader(db *sql.DB) {
+func (c *CPool) poolSize() int {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
+
+	return len(c.pool)
+}
+
+// AddReader append a db connection to the pool
+func (c *CPool) AddReader(db *sql.DB) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 
 	if len(c.pool) > 1 {
 		for i, po := range c.pool[1:] {

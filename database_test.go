@@ -29,13 +29,13 @@ func TestOpen(t *testing.T) {
 
 	db, _ := Open("dummy", c...)
 
-	if numConns := len(db.cpool.pool); numConns == 0 {
+	if numConns := db.cpool.poolSize(); numConns == 0 {
 		t.Errorf("expect at least %d db connections, got %d", 1, numConns)
 	}
 
 	time.Sleep(10 * time.Millisecond)
 
-	if numConns := len(db.cpool.pool); numConns != 2 {
+	if numConns := db.cpool.poolSize(); numConns != 2 {
 		t.Errorf("expect at least %d db connections, got %d", 2, numConns)
 	}
 }
