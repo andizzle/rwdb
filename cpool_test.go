@@ -102,4 +102,9 @@ func TestGetWriter(t *testing.T) {
 	if db, err := c.Writer(); err != nil {
 		t.Errorf("get writer from cpool expect to return db, got %v instead", db)
 	}
+
+	var d = CPool{pool: []*sql.DB{nil}}
+	if db, err := d.Writer(); err == nil {
+		t.Errorf("get writer from empty cpool expect to return err, got %v instead", db)
+	}
 }
