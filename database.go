@@ -22,8 +22,10 @@ type DB struct {
 }
 
 func walk(cpool *CPool, fn func(conn *sql.DB) error) error {
-	n := len(cpool.pool)
-	errors := make(chan error, n)
+	errors := make(chan error, 1)
+
+	cpool.lock.Lock()
+	defer cpool.lock.Unlock()
 
 	for _, conn := range cpool.pool {
 		if conn == nil {
@@ -187,7 +189,7 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (Stmt, error) {
 
 	stmt.stmts = append([]*sql.Stmt{write}, stmt.stmts...)
 
-	if len(db.cpool.pool) > 1 {
+	if db.cpool.poolSize() > 1 {
 		go func() {
 			reader, err := db.cpool.Reader()
 
