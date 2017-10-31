@@ -119,6 +119,26 @@ func TestQuery(t *testing.T) {
 	}
 }
 
+func TestQueryRow(t *testing.T) {
+	r := db.QueryRow("SELECT")
+
+	switch v := r.(type) {
+	case Row:
+	default:
+		t.Errorf("expect Row, got %T instead", v)
+	}
+
+	tdb, _ := Open("fakedb", "foo")
+	tdb.cpool.pool = []*sql.DB{}
+	r = tdb.QueryRow("SELECT")
+
+	switch v := r.(type) {
+	case Row:
+	default:
+		t.Errorf("expect Row, got %T instead", v)
+	}
+}
+
 func TestExec(t *testing.T) {
 	_, err := db.Exec("INSERT")
 
@@ -185,4 +205,13 @@ func TestClose(t *testing.T) {
 	db, _ := Open("fakedb", "foo")
 
 	db.Close()
+}
+
+func TestPing(t *testing.T) {
+	db, _ := Open("fakedb", "foo")
+
+	err := db.Ping()
+	if err != nil {
+		t.Errorf("unexpected error %v", err)
+	}
 }

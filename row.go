@@ -12,6 +12,5 @@ type Row interface {
 type row struct {
 	sql.Row
 
-	err  error
-	rows *sql.Rows
+	err error
 }

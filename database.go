@@ -172,7 +172,7 @@ func (db *DB) Prepare(query string) (Stmt, error) {
 // The statement will be executed in the writer
 // and queries in reader
 func (db *DB) PrepareContext(ctx context.Context, query string) (Stmt, error) {
-	stmt := stmt{}
+	stmt := &stmt{}
 
 	writer, err := db.cpool.Writer()
 	if err != nil {
@@ -201,7 +201,7 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (Stmt, error) {
 		}()
 	}
 
-	return &stmt, nil
+	return stmt, nil
 }
 
 // Close closes all physical db connections

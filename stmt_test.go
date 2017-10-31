@@ -53,3 +53,25 @@ func TestStmtQuery(t *testing.T) {
 		t.Errorf("unexpected error %v", err)
 	}
 }
+
+func TestStmtQueryRow(t *testing.T) {
+	stmt := &stmt{}
+
+	stmt.QueryRow("SELECT")
+
+	dbt, _ := Open("fakedb", "foo", "fred")
+	time.Sleep(10 * time.Millisecond)
+
+	stmtc, _ := dbt.Prepare("SELECT")
+	time.Sleep(10 * time.Millisecond)
+
+	stmtc.QueryRow("SELECT")
+
+	dbt, _ = Open("fakedb", "foo")
+	time.Sleep(10 * time.Millisecond)
+
+	stmtc, _ = dbt.Prepare("SELECT")
+	time.Sleep(10 * time.Millisecond)
+
+	stmtc.QueryRow("SELECT")
+}
