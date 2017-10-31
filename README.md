@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/andizzle/rwdb.svg?branch=master)](https://travis-ci.org/andizzle/rwdb)
 [![GoDoc](https://godoc.org/github.com/andizzle/rwdb?status.svg)](https://godoc.org/github.com/andizzle/rwdb)
+[![Coverage Status](https://coveralls.io/repos/github/andizzle/rwdb/badge.svg?branch=master)](https://coveralls.io/github/andizzle/rwdb?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/andizzle/rwdb)](https://goreportcard.com/report/github.com/andizzle/rwdb)
 
 Database wrapper that manage read write connections
 
