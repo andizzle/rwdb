@@ -2,47 +2,39 @@ package rwdb
 
 import (
 	"database/sql"
-	"database/sql/driver"
 	"testing"
 	"time"
+
+	_ "github.com/andizzle/go-fakedb"
 )
 
-type Dummy struct {
-	driver.Driver
-}
+var db *DB
 
 func init() {
-	sql.Register("dummy", Dummy{})
+	db, _ = Open("fakedb", "foo")
 }
 
 func TestOpen(t *testing.T) {
-	_, err := Open("test")
+	_, err := Open("fakedb")
 
 	if err == nil {
 		t.Errorf("expect no data source error")
 	}
 
-	var c = []string{
-		"foo",
-		"fred",
-	}
+	tdb, _ := Open("fakedb", "foo", "fred")
 
-	db, _ := Open("dummy", c...)
-
-	if numConns := db.cpool.poolSize(); numConns == 0 {
+	if numConns := tdb.cpool.poolSize(); numConns == 0 {
 		t.Errorf("expect at least %d db connections, got %d", 1, numConns)
 	}
 
 	time.Sleep(10 * time.Millisecond)
 
-	if numConns := db.cpool.poolSize(); numConns != 2 {
+	if numConns := tdb.cpool.poolSize(); numConns != 2 {
 		t.Errorf("expect at least %d db connections, got %d", 2, numConns)
 	}
 }
 
 func TestSetSticky(t *testing.T) {
-	db, _ := Open("dummy", "foo")
-
 	db.SetSticky(false)
 
 	if db.sticky {
@@ -51,8 +43,7 @@ func TestSetSticky(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	db, _ := Open("dummy", "foo")
-
+	db, _ := Open("fakedb", "foo")
 	dbClone := db.New()
 
 	if db.cpool != dbClone.cpool {
@@ -66,8 +57,6 @@ func TestNew(t *testing.T) {
 }
 
 func TestDriver(t *testing.T) {
-	db, _ := Open("dummy", "foo")
-
 	driver := db.Driver()
 
 	if driver != db.cpool.pool[0].Driver() {
@@ -81,7 +70,7 @@ func TestNext(t *testing.T) {
 		"fred",
 	}
 
-	db, _ := Open("dummy", c...)
+	db, _ := Open("fakedb", c...)
 	time.Sleep(10 * time.Millisecond)
 
 	db.next()
@@ -103,5 +92,45 @@ func TestNext(t *testing.T) {
 
 	if writer != db.cpool.pool[0] {
 		t.Errorf("expect writer to return, instead got %v", writer)
+	}
+}
+
+func TestBegin(t *testing.T) {
+	_, err := db.Begin()
+
+	if err != nil {
+		t.Errorf("unexpected error %v", err)
+	}
+}
+
+func TestQuery(t *testing.T) {
+	_, err := db.Query("SELECT")
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	tdb, _ := Open("fakedb", "foo")
+	tdb.cpool.pool = []*sql.DB{}
+	_, err = tdb.Query("SELECT")
+
+	if err.Error() != "no reader db available" {
+		t.Errorf("expect no reader db available error, got %v instead", err)
+	}
+}
+
+func TestExec(t *testing.T) {
+	_, err := db.Exec("INSERT")
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	tdb, _ := Open("fakedb", "foo")
+	tdb.cpool.pool = []*sql.DB{}
+	_, err = tdb.Query("SELECT")
+
+	if err.Error() != "no reader db available" {
+		t.Errorf("expect no reader db available error, got %v instead", err)
 	}
 }
