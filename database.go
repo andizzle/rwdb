@@ -37,11 +37,9 @@ func walk(cpool *CPool, fn func(conn *sql.DB) error) error {
 		}(conn)
 	}
 
-	for err := range errors {
-		if err != nil {
-			close(errors)
-			return err
-		}
+	// var e error
+	if err := <-errors; err != nil {
+		return err
 	}
 
 	return nil
@@ -144,9 +142,10 @@ func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}
 	}
 
 	result, err := writer.ExecContext(ctx, query, args...)
-
-	if rowAffected, _ := result.RowsAffected(); rowAffected > 0 {
-		db.modified = true
+	if err == nil {
+		if rowAffected, _ := result.RowsAffected(); rowAffected > 0 {
+			db.modified = true
+		}
 	}
 
 	return result, err
