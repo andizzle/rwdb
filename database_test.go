@@ -134,3 +134,55 @@ func TestExec(t *testing.T) {
 		t.Errorf("expect no reader db available error, got %v instead", err)
 	}
 }
+
+func TestPrepare(t *testing.T) {
+	db, _ := Open("fakedb", "foo", "fred")
+
+	time.Sleep(10 * time.Millisecond)
+
+	_, err := db.Prepare("INSERT")
+	if err != nil {
+		t.Errorf("unexpected error %v", err)
+	}
+
+	db.cpool.pool = []*sql.DB{}
+
+	_, err = db.Prepare("INSERT")
+	if err.Error() != "no writer db available" {
+		t.Errorf("expect no writer db available error, got %v instead", err)
+	}
+}
+
+func TestSetConnMaxLifetime(t *testing.T) {
+	db, _ := Open("fakedb", "foo")
+	max := 1000 * time.Millisecond
+	db.SetConnMaxLifetime(max)
+
+	if db.maxLifetime != max {
+		t.Errorf("expect db conn max life time to be %v, got %v instead", max, db.maxLifetime)
+	}
+}
+
+func TestSetMaxOpenConns(t *testing.T) {
+	db, _ := Open("fakedb", "foo")
+	db.SetMaxOpenConns(2)
+
+	if db.maxOpen != 2 {
+		t.Errorf("expect db conn max life time to be %v, got %v instead", 2, db.maxOpen)
+	}
+}
+
+func TestSetMaxIdleConns(t *testing.T) {
+	db, _ := Open("fakedb", "foo")
+	db.SetMaxIdleConns(2)
+
+	if db.maxIdle != 2 {
+		t.Errorf("expect db conn max life time to be %v, got %v instead", 2, db.maxIdle)
+	}
+}
+
+func TestClose(t *testing.T) {
+	db, _ := Open("fakedb", "foo")
+
+	db.Close()
+}

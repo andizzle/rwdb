@@ -175,13 +175,11 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (Stmt, error) {
 	stmt := stmt{}
 
 	writer, err := db.cpool.Writer()
-
 	if err != nil {
 		return nil, err
 	}
 
 	write, err := writer.Prepare(query)
-
 	if err != nil {
 		return nil, err
 	}
