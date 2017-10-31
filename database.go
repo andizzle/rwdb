@@ -129,7 +129,7 @@ func (db *DB) Begin() (*sql.Tx, error) {
 
 // Exec writes to Writer and mark db as modified
 func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return db.ExecContext(context.Background(), query, args)
+	return db.ExecContext(context.Background(), query, args...)
 }
 
 // ExecContext execute a query with context
@@ -215,7 +215,7 @@ func (db *DB) Close() error {
 
 // Query perform a query context with background context
 func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return db.QueryContext(context.Background(), query, args)
+	return db.QueryContext(context.Background(), query, args...)
 }
 
 // QueryContext executes a query that returns rows, typically a SELECT.
