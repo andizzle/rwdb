@@ -7,7 +7,7 @@
 
 Database wrapper that manage read write connections
 
-## install
+## Install
 
 ```
 go get github.com/andizzle/rwdb
