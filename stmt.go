@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"sync"
 )
 
 // Stmt allows DB
@@ -20,6 +21,7 @@ type Stmt interface {
 // stmt holds at most 2 sql.Stmt
 type stmt struct {
 	stmts []*sql.Stmt
+	lock  sync.RWMutex
 }
 
 // Close will close the statments connections
@@ -39,6 +41,9 @@ func (s *stmt) Exec(args ...interface{}) (sql.Result, error) {
 // Exec execute statement with context
 // The statement is executed on the writer database
 func (s *stmt) ExecContext(ctx context.Context, args ...interface{}) (sql.Result, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	if len(s.stmts) == 0 {
 		return nil, errors.New("zero statement executable")
 	}
@@ -54,6 +59,9 @@ func (s *stmt) Query(args ...interface{}) (*sql.Rows, error) {
 // Query execute statement with context
 // The statement is executed on reader database
 func (s *stmt) QueryContext(ctx context.Context, args ...interface{}) (*sql.Rows, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	if len(s.stmts) == 0 {
 		return nil, errors.New("zero statement executable")
 	}
@@ -74,6 +82,9 @@ func (s *stmt) QueryRow(args ...interface{}) Row {
 
 // QueryRowContext is executed on reader database
 func (s *stmt) QueryRowContext(ctx context.Context, args ...interface{}) Row {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	if len(s.stmts) == 0 {
 		return &row{err: errors.New("zero statement executable")}
 	}

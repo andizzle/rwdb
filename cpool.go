@@ -15,10 +15,7 @@ type CPool struct {
 }
 
 func (c *CPool) nextInPool() int {
-	c.lock.RLock()
-	defer c.lock.RUnlock()
-
-	if len(c.pool) == 0 {
+	if c.poolSize() == 0 {
 		return -1
 	}
 

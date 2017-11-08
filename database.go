@@ -184,21 +184,23 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (Stmt, error) {
 		return nil, err
 	}
 
-	stmt.stmts = append([]*sql.Stmt{write}, stmt.stmts...)
+	stmt.stmts = []*sql.Stmt{write}
 
 	if db.cpool.poolSize() > 1 {
-		go func() {
-			reader, err := db.cpool.Reader()
+		reader, err := db.cpool.Reader()
+		if err == nil {
+			// we have writer statement prepared
+			// this error can be ignored
+			go func(reader *sql.DB) {
 
-			if err != nil {
-				// we have writer statement prepared
-				// this error can be ignored
-				return
-			}
+				read, _ := reader.PrepareContext(ctx, query)
 
-			read, _ := reader.PrepareContext(ctx, query)
-			stmt.stmts = append(stmt.stmts, read)
-		}()
+				stmt.lock.Lock()
+				defer stmt.lock.Unlock()
+
+				stmt.stmts = append(stmt.stmts, read)
+			}(reader)
+		}
 	}
 
 	return stmt, nil
