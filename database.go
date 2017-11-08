@@ -192,7 +192,6 @@ func (db *DB) PrepareContext(ctx context.Context, query string) (Stmt, error) {
 			// we have writer statement prepared
 			// this error can be ignored
 			go func(reader *sql.DB) {
-
 				read, _ := reader.PrepareContext(ctx, query)
 
 				stmt.lock.Lock()
