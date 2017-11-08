@@ -36,6 +36,8 @@ db, err := rwdb.Open("driver", conns...)
 
 Query a database rotate the use of database connections
 
+### Basic usage
+
 ```go
 db, err := rwdb.Open("driver", conns...)
 
@@ -68,6 +70,8 @@ Sticky can be turned off
 db.SetSticky(false)
 ```
 
+### A more practical example
+
 The db is marked as modified if there's a successful `Write` to the databse, which turns on the sticky logic. 
 However, the real world usecase would require `modified` value to be reset on each request session.
 
@@ -77,13 +81,13 @@ Here's what we can do:
 db, err := rwdb.Open("driver", conns...)
 
 func RecordUserLogin() {
-        d := db.New()      // This will make sure the following read are not affected by 
-                             // other sessions' write action
+        d := db.New()       // This will make sure the following read are not affected by 
+                            // other sessions' write action
 
         d.Query("SELECT * from `users` where id = ?")
         ...
         d.Exec("UPDATE `users` set last_login_at = now();")
-        d.Query(...)         // Connection is set to the writer
+        d.Query(...)        // Connection is set to the writer
 }
 ```
 
